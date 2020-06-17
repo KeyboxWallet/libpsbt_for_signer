@@ -32,7 +32,7 @@
 
 #include <btc/buffer.h>
 #include <btc/hash.h>
-#include <btc/ripemd160.h>
+#include "ripemd160.h"
 #include <btc/serialize.h>
 
 
@@ -186,6 +186,16 @@ static btc_bool btc_script_is_op(const btc_script_op* op, enum opcodetype opcode
 {
     return (op->op == opcode);
 }
+
+static unsigned int btc_pubkey_get_length(unsigned char ch_header)
+{
+    if (ch_header == 2 || ch_header == 3)
+        return BTC_ECKEY_COMPRESSED_LENGTH;
+    if (ch_header == 4 || ch_header == 6 || ch_header == 7)
+        return BTC_ECKEY_UNCOMPRESSED_LENGTH;
+    return 0;
+}
+
 
 static btc_bool btc_script_is_op_pubkey(const btc_script_op* op)
 {
@@ -451,7 +461,7 @@ btc_bool btc_script_get_scripthash(const cstring* script_in, uint160 scripthash)
     }
     uint256 hash;
     btc_hash_sngl_sha256((const unsigned char *)script_in->str, script_in->len, hash);
-    btc_ripemd160(hash, sizeof(hash), scripthash);
+    ripemd160(hash, sizeof(hash), scripthash);
 
     return true;
 }

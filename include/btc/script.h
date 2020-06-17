@@ -29,7 +29,6 @@
 
 #include "btc.h"
 #include "cstr.h"
-#include "ecc_key.h"
 #include "vector.h"
 
 LIBBTC_BEGIN_DECL
@@ -211,6 +210,11 @@ typedef struct btc_script_op_ {
     unsigned char* data; /* associated data, if any */
     size_t datalen;
 } btc_script_op;
+
+typedef struct btc_pubkey_ {
+    btc_bool compressed;
+    uint8_t pubkey[BTC_ECKEY_UNCOMPRESSED_LENGTH];
+} btc_pubkey;
 
 // Maximum script length in bytes
 static const int MAX_SCRIPT_SIZE = 10000;

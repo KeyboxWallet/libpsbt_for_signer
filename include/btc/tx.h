@@ -96,7 +96,7 @@ LIBBTC_API btc_bool btc_tx_sighash(const btc_tx* tx_to, const cstring* fromPubKe
 LIBBTC_API btc_bool btc_tx_add_address_out(btc_tx* tx, const btc_chainparams* chain, int64_t amount, const char* address);
 LIBBTC_API btc_bool btc_tx_add_p2sh_hash160_out(btc_tx* tx, int64_t amount, uint160 hash160);
 LIBBTC_API btc_bool btc_tx_add_p2pkh_hash160_out(btc_tx* tx, int64_t amount, uint160 hash160);
-LIBBTC_API btc_bool btc_tx_add_p2pkh_out(btc_tx* tx, int64_t amount, const btc_pubkey* pubkey);
+//LIBBTC_API btc_bool btc_tx_add_p2pkh_out(btc_tx* tx, int64_t amount, const btc_pubkey* pubkey);
 
 LIBBTC_API btc_bool btc_tx_add_data_out(btc_tx* tx, const int64_t amount, const uint8_t *data, const size_t datalen);
 LIBBTC_API btc_bool btc_tx_add_puzzle_out(btc_tx* tx, const int64_t amount, const uint8_t *puzzle, const size_t puzzlelen);
@@ -107,18 +107,6 @@ LIBBTC_API btc_bool btc_tx_is_coinbase(btc_tx* tx);
 LIBBTC_API btc_bool btc_tx_has_witness(const btc_tx *tx);
 LIBBTC_API btc_bool btc_tx_has_scriptSig(const btc_tx *tx);
 
-enum btc_tx_sign_result {
-    BTC_SIGN_UNKNOWN = 0,
-    BTC_SIGN_INVALID_KEY = -2,
-    BTC_SIGN_NO_KEY_MATCH = -3, //if the key found in the script doesn't match the given key, will sign anyways
-    BTC_SIGN_SIGHASH_FAILED = -4,
-    BTC_SIGN_UNKNOWN_SCRIPT_TYPE = -5,
-    BTC_SIGN_INVALID_TX_OR_SCRIPT = -6,
-    BTC_SIGN_INPUTINDEX_OUT_OF_RANGE = -7,
-    BTC_SIGN_OK = 1,
-};
-const char* btc_tx_sign_result_to_str(const enum btc_tx_sign_result result);
-enum btc_tx_sign_result btc_tx_sign_input(btc_tx *tx_in_out, const cstring *script, uint64_t amount, const btc_key *privkey, int inputindex, int sighashtype, uint8_t *sigcompact_out, uint8_t *sigder_out, int *sigder_len);
 
 LIBBTC_END_DECL
 
