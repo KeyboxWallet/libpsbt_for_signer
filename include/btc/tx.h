@@ -106,6 +106,7 @@ LIBBTC_API btc_bool btc_tx_is_coinbase(btc_tx* tx);
 
 LIBBTC_API btc_bool btc_tx_has_witness(const btc_tx *tx);
 LIBBTC_API btc_bool btc_tx_has_scriptSig(const btc_tx *tx);
+LIBBTC_API void btc_tx_get_output_address(char address[98], const btc_tx_out * tx_out, const btc_chainparams * params);
 
 
 LIBBTC_END_DECL

@@ -768,3 +768,41 @@ btc_bool btc_tx_is_coinbase(btc_tx* tx)
     return false;
 }
 
+void btc_tx_get_output_address(char address[98], const btc_tx_out * tx_out, const btc_chainparams * params)
+{
+    if(!tx_out || !tx_out->script_pubkey){
+        return;
+    }
+    vector * data;
+    uint8_t buffer[24];
+    data = vector_new(2, free);
+    bool isBase58 = false;
+    // btc_output_
+    enum btc_tx_out_type type = btc_script_classify(tx_out->script_pubkey, data);
+    switch( type){
+    case BTC_TX_PUBKEYHASH:
+        buffer[0] = params->b58prefix_pubkey_address;
+        isBase58 = true;
+        break;
+    case BTC_TX_SCRIPTHASH:
+        buffer[0] = params->b58prefix_script_address;
+        isBase58 = true;
+        break;
+    case BTC_TX_WITNESS_V0_PUBKEYHASH:
+        segwit_addr_encode(address, params->bech32_hrp, 0, vector_idx(data, 0), 20);
+        break;
+    case BTC_TX_WITNESS_V0_SCRIPTHASH:
+        segwit_addr_encode(address, params->bech32_hrp, 0, vector_idx(data, 0), 32);
+        break;
+    default:
+        strcpy(address, "unknown");
+        break;
+    }
+
+    if( isBase58 ){
+        memcpy(buffer+1, vector_idx(data,0), 20);
+        base58_encode_check(buffer, 21, HASHER_SHA2D, address, 98);
+    }
+    vector_free(data, true);
+}
+
