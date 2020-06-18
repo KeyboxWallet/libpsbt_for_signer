@@ -462,7 +462,7 @@ _reset_cstring:
 }
 
 
-static btc_tx * get_unsigned_tx(const psbt * psbt)
+btc_tx * psbt_get_unsigned_tx(const psbt * psbt)
 {
     btc_tx * ret = NULL;
     size_t i;
@@ -493,7 +493,7 @@ int psbt_check_for_sig(const psbt *psbt, uint32_t input_n, uint32_t * hashtype_o
 
     if( !psbt || !psbt->global_data || !psbt->input_data ) SET_ERR_MSG_AND_RET("invalid psbt");
     if( psbt->input_data->len <= input_n ) SET_ERR_MSG_AND_RET("input_n too large");
-    btc_tx * tx = get_unsigned_tx(psbt);
+    btc_tx * tx = psbt_get_unsigned_tx(psbt);
     if( !tx ) SET_ERR_MSG_AND_RET("get unsigned transaction error");
     if( tx->vin->len <= input_n ) SET_ERR_MSG_AND_RET("input_n too large");
     btc_tx_in * tx_in = vector_idx(tx->vin, input_n);
@@ -607,7 +607,7 @@ int psbt_get_sighash(const psbt *psbt, uint32_t input_n, uint32_t hash_type, uin
 
     if( !psbt || !psbt->global_data || !psbt->input_data ) SET_ERR_MSG_AND_RET("invalid psbt");
     if( psbt->input_data->len <= input_n ) SET_ERR_MSG_AND_RET("input_n too large");
-    btc_tx * tx = get_unsigned_tx(psbt);
+    btc_tx * tx = psbt_get_unsigned_tx(psbt);
     if( !tx ) SET_ERR_MSG_AND_RET("get unsigned transaction error");
     if( tx->vin->len <= input_n ) SET_ERR_MSG_AND_RET("input_n too large");
     btc_tx_in * tx_in = vector_idx(tx->vin, input_n);

@@ -31,6 +31,7 @@
 #include "vector.h"
 #include "serialize.h"
 #include "buffer.h"
+#include "tx.h"
 
 LIBBTC_BEGIN_DECL
 
@@ -128,6 +129,8 @@ LIBBTC_API void psbt_init(psbt * psbt);
 LIBBTC_API void psbt_reset(psbt * psbt);
 
 LIBBTC_API uint32_t psbt_get_input_count(const psbt * psbt);
+
+LIBBTC_API btc_tx * psbt_get_unsigned_tx(const psbt * psbt);
 
 LIBBTC_API int psbt_check_for_sig(const psbt *psbt, uint32_t input_n, uint32_t * hashtype_out, char ** err_message);
 
