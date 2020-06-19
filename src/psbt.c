@@ -384,6 +384,49 @@ void psbt_reset(psbt * psbt)
     }
 }
 
+static size_t compact_to_der_norm(uint8_t * sig,
+                        uint8_t * R, uint8_t * S,
+                        uint8_t hashType )
+{
+    size_t  i, pos=0;
+    sig[pos++] = 0x30;
+    pos++; // len, empty now
+    sig[pos++] = 2;
+    for(i=0; i<32; i++){
+        if( R[i] != 0){
+            break;
+        }
+    }
+    if( R[i]&0x80){
+        sig[pos++] = 33-i;
+        sig[pos++] = 0;
+    }
+    else{
+        sig[pos++] = 32-i;
+    }
+    memcpy(sig+pos, R+i, 32-i);
+    pos += 32-i;
+    sig[pos++] = 2;
+    for(i=0; i<32; i++){
+        if( S[i] != 0){
+            break;
+        }
+    }
+    if( S[i]&0x80){
+        sig[pos++] = 33-i;
+        sig[pos++] = 0;
+    }
+    else{
+        sig[pos++] = 32-i;
+    }
+    memcpy(sig+pos, S+i, 32-i);
+    pos+= 32-i;
+    sig[1] = pos-2;
+    sig[pos++] = hashType;
+    return pos;
+}
+
+
 static inline void ser_psbt_map_elem(cstring *str, psbt_map_elem * elem)
 {
     ser_varlen(str, elem->key.len);
@@ -423,10 +466,15 @@ int psbt_serialize( cstring * str, const psbt * psbt )
             if( psbt_map_elem_get_flag_dirty(elem)){
                 // todo: 
                 if( elem->type.input == PSBT_IN_PARTIAL_SIG){
-                    ser_varlen(str, 33);
+                    ser_varlen(str, 34);
+                    ser_bytes(str, &elem->type.input, 1);
                     ser_bytes(str, elem->parsed.elem, 33);
-                    ser_varlen(str, 65);
-                    ser_bytes(str, (uint8_t*)elem->parsed.elem+33, 65);
+                    uint8_t normDerSig[75];
+                    size_t der_size = compact_to_der_norm(normDerSig,
+                        (uint8_t*)elem->parsed.elem+33, (uint8_t*)elem->parsed.elem+33+32,
+                        ((uint8_t*)elem->parsed.elem)[33+32+32] );
+                    ser_varlen(str, der_size);
+                    ser_bytes(str, normDerSig, der_size);
                 }
                 else 
                     goto _reset_cstring;
