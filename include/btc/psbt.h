@@ -138,7 +138,7 @@ LIBBTC_API int psbt_get_sighash(const psbt *psbt, uint32_t input_n, uint32_t has
 
 LIBBTC_API int psbt_add_partial_sig(psbt *psbt, uint32_t input_n, uint8_t pubkey[33], uint8_t sig[65]);
 
-// LIBBTC_API int psbt_sign(psbt *psbt, uint32_t input_n, const btc_key *privkey);
+LIBBTC_API int psbt_get_miner_fee(const psbt *psbt, uint64_t * sat);
 
 LIBBTC_END_DECL
 

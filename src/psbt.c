@@ -818,3 +818,54 @@ int psbt_add_partial_sig(psbt *psbt, uint32_t input_n, uint8_t pubkey[33], uint8
     vector_add(vector_idx(psbt->input_data, input_n), elem);
     return true;
 }
+
+int psbt_get_miner_fee(const psbt *psbt, uint64_t * sat)
+{
+    if( !psbt || !psbt->global_data || !psbt->input_data || !psbt->output_data) return false;
+    size_t vin_len = psbt->input_data->len;
+    size_t vout_len = psbt->input_data->len;
+    size_t i,j;
+    int  vin_has_value;
+    vector *in;
+    btc_tx * tx = psbt_get_unsigned_tx(psbt);
+    btc_tx *prev_tx ;
+    if( !tx ){
+        return false;
+    }
+  
+    uint64_t vin_sat = 0, vout_sat = 0;
+    for( i=0; i<vin_len; i++)
+    {
+        in = vector_idx(psbt->input_data, i);
+        vin_has_value = false;
+        for( j=0; j<in->len; j++){
+            psbt_map_elem * elem = vector_idx(in, j);
+            if( elem->type.input == PSBT_IN_NON_WITNESS_UTXO){
+                btc_tx_in *tx_in = vector_idx(tx->vin, i);
+                uint32_t prev_out_idx = tx_in->prevout.n;
+                prev_tx = elem->parsed.elem;
+
+                btc_tx_out * tx_out = vector_idx(prev_tx->vout, prev_out_idx);
+                vin_sat += tx_out->value;
+                vin_has_value = true;
+                break;
+            }
+            else if(elem->type.input == PSBT_IN_WITNESS_UTXO){
+                btc_tx_out * out = elem->parsed.elem;
+                vin_sat += out->value;
+                vin_has_value = true;
+                break;
+            }
+
+        }
+        if( !vin_has_value){
+            return false;
+        }
+    }
+    for(i=0; i<vout_len; i++){
+        btc_tx_out *out = vector_idx(tx->vout, i);
+        vout_sat += out->value;
+    }
+    *sat = vin_sat - vout_sat;
+    return true;
+}
