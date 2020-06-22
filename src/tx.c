@@ -78,7 +78,7 @@ void btc_tx_in_witness_stack_free_cb(void* data)
     cstr_free(stack_item, true);
 }
 
-btc_tx_in* btc_tx_in_new()
+btc_tx_in* btc_tx_in_new(void)
 {
     btc_tx_in* tx_in;
     tx_in = btc_calloc(1, sizeof(*tx_in));
@@ -116,7 +116,7 @@ void btc_tx_out_free_cb(void* data)
 }
 
 
-btc_tx_out* btc_tx_out_new()
+btc_tx_out* btc_tx_out_new(void)
 {
     btc_tx_out* tx_out;
     tx_out = btc_calloc(1, sizeof(*tx_out));
@@ -137,7 +137,7 @@ void btc_tx_free(btc_tx* tx)
 }
 
 
-btc_tx* btc_tx_new()
+btc_tx* btc_tx_new(void)
 {
     btc_tx* tx;
     tx = btc_calloc(1, sizeof(*tx));
@@ -194,7 +194,7 @@ int btc_tx_deserialize(const unsigned char* tx_serialized, size_t inlen, btc_tx*
         }
     }
 
-    unsigned int i;
+    size_t i;
     for (i = 0; i < vlen; i++) {
         btc_tx_in* tx_in = btc_tx_in_new();
 
@@ -222,9 +222,8 @@ int btc_tx_deserialize(const unsigned char* tx_serialized, size_t inlen, btc_tx*
     if ((flags & 1) && allow_witness) {
         /* The witness flag is present, and we support witnesses. */
         flags ^= 1;
-        for (size_t i = 0; i < tx->vin->len; i++) {
+        for (i = 0; i < tx->vin->len; i++) {
             btc_tx_in *tx_in = vector_idx(tx->vin, i);
-            uint32_t vlen;
             if (!deser_varlen(&vlen, &buf)) return false;
             for (size_t j = 0; j < vlen; j++) {
                 cstring* witness_item = cstr_new_sz(1024);

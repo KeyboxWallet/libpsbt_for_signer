@@ -68,17 +68,17 @@ typedef struct btc_tx_ {
 
 
 //!create a new tx input
-LIBBTC_API btc_tx_in* btc_tx_in_new();
+LIBBTC_API btc_tx_in* btc_tx_in_new(void);
 LIBBTC_API void btc_tx_in_free(btc_tx_in* tx_in);
 LIBBTC_API void btc_tx_in_copy(btc_tx_in* dest, const btc_tx_in* src);
 
 //!create a new tx output
-LIBBTC_API btc_tx_out* btc_tx_out_new();
+LIBBTC_API btc_tx_out* btc_tx_out_new(void);
 LIBBTC_API void btc_tx_out_free(btc_tx_out* tx_out);
 LIBBTC_API void btc_tx_out_copy(btc_tx_out* dest, const btc_tx_out* src);
 
 //!create a new tx input
-LIBBTC_API btc_tx* btc_tx_new();
+LIBBTC_API btc_tx* btc_tx_new(void);
 LIBBTC_API void btc_tx_free(btc_tx* tx);
 LIBBTC_API void btc_tx_copy(btc_tx* dest, const btc_tx* src);
 

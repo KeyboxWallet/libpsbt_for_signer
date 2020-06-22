@@ -34,7 +34,7 @@ extern inline btc_bool psbt_map_elem_get_flag_dirty(const psbt_map_elem * elem);
 extern inline void psbt_map_elem_set_flag_unknown_type(psbt_map_elem * elem, btc_bool unknown);
 extern inline void psbt_map_elem_set_flag_dirty(psbt_map_elem * elem, btc_bool dirty);
 
-static psbt_map_elem * psbt_map_elem_new()
+static psbt_map_elem * psbt_map_elem_new(void)
 {
     psbt_map_elem* elem;
     elem = btc_malloc(sizeof(psbt_map_elem));
@@ -79,7 +79,6 @@ static void psbt_map_free(void *e)
 
 static int psbt_map_elem_deserialize( psbt_map_elem * elem, struct const_buffer * buffer )
 {
-    int ret;
     uint32_t len;
     if(! deser_varlen(&len, buffer) ){
         return false;
@@ -103,7 +102,7 @@ static int psbt_map_elem_deserialize( psbt_map_elem * elem, struct const_buffer 
     return true;
 }
 
-static int psbt_map_deserialize(vector * vector, struct const_buffer * buffer)
+static int psbt_map_deserialize(vector * pvec, struct const_buffer * buffer)
 {
     if(buffer->len == 0){
         return false;
@@ -119,15 +118,15 @@ static int psbt_map_deserialize(vector * vector, struct const_buffer * buffer)
             return false;
         }
         // avoid duplicate key
-        for(size_t i=0; i<vector->len; i++){
-            psbt_map_elem *va = vector->data[i];
+        for(size_t i=0; i<pvec->len; i++){
+            psbt_map_elem *va = pvec->data[i];
             if( buffer_equal(&va->key, &elem->key)){
                 btc_free(elem);
                 return false;
             }
         }
 
-        if( !vector_add(vector, elem)){
+        if( !vector_add(pvec, elem)){
             btc_free(elem);
             return false;
         }
@@ -256,10 +255,6 @@ static int psbt_input_map_element_parse(psbt_map_elem *elem)
 
 static int psbt_output_map_element_parse(psbt_map_elem *elem)
 {
-    size_t parsedSize;
-    btc_tx * tx;
-    btc_tx_out * out;
-    struct const_buffer localBuf;
     if( !elem ){
         return false;
     }
@@ -288,7 +283,7 @@ static int psbt_output_map_element_parse(psbt_map_elem *elem)
     return true;
 }
 
-int psbt_deserialize( psbt * psbt, struct const_buffer *buffer)
+int psbt_deserialize( psbt * ppsbt, struct const_buffer *buffer)
 {
     uint32_t flag;
     uint8_t sep;
@@ -305,13 +300,13 @@ int psbt_deserialize( psbt * psbt, struct const_buffer *buffer)
     if( sep != 0xff){
         return false;
     }
-    psbt->global_data = vector_new(2, psbt_global_map_elem_free);
-    if( !psbt_map_deserialize(psbt->global_data, buffer)){
+    ppsbt->global_data = vector_new(2, psbt_global_map_elem_free);
+    if( !psbt_map_deserialize(ppsbt->global_data, buffer)){
         return false;
     }
     btc_tx * tx = NULL;
-    for(i=0; i< psbt->global_data->len; i++){
-        psbt_map_elem * elem = vector_idx(psbt->global_data,i);
+    for(i=0; i< ppsbt->global_data->len; i++){
+        psbt_map_elem * elem = vector_idx(ppsbt->global_data,i);
         if(!psbt_global_map_element_parse(elem)){
             return false;
         }
@@ -327,8 +322,8 @@ int psbt_deserialize( psbt * psbt, struct const_buffer *buffer)
     }
     size_t vin_len = tx->vin->len;
     size_t vout_len = tx->vout->len;
-    psbt->input_data = vector_new(vin_len, psbt_map_free);
-    psbt->output_data = vector_new(vout_len, psbt_map_free);
+    ppsbt->input_data = vector_new(vin_len, psbt_map_free);
+    ppsbt->output_data = vector_new(vout_len, psbt_map_free);
     for(i=0; i<vin_len; i++){
         vector * in = vector_new(4, psbt_input_map_elem_free);
         if( !psbt_map_deserialize(in, buffer) ){
@@ -341,7 +336,7 @@ int psbt_deserialize( psbt * psbt, struct const_buffer *buffer)
                 return false;
             }
         }
-        vector_add(psbt->input_data, in);
+        vector_add(ppsbt->input_data, in);
     }
     for(i=0; i<vout_len; i++){
         vector * out = vector_new(4, free);
@@ -355,32 +350,32 @@ int psbt_deserialize( psbt * psbt, struct const_buffer *buffer)
                 return false;
             }
         }
-        vector_add(psbt->output_data, out);
+        vector_add(ppsbt->output_data, out);
     }
 
     return true;
 }
 
-void psbt_init(psbt * psbt)
+void psbt_init(psbt * ppsbt)
 {
-    psbt->global_data = NULL;
-    psbt->input_data = NULL;
-    psbt->output_data = NULL;
+    ppsbt->global_data = NULL;
+    ppsbt->input_data = NULL;
+    ppsbt->output_data = NULL;
 }
 
-void psbt_reset(psbt * psbt)
+void psbt_reset(psbt * ppsbt)
 {
-    if(psbt->global_data){
-        vector_free(psbt->global_data, true);
-        psbt->global_data = NULL;
+    if(ppsbt->global_data){
+        vector_free(ppsbt->global_data, true);
+        ppsbt->global_data = NULL;
     }
-    if(psbt->input_data){
-        vector_free(psbt->input_data, true);
-        psbt->input_data = NULL;
+    if(ppsbt->input_data){
+        vector_free(ppsbt->input_data, true);
+        ppsbt->input_data = NULL;
     }
-    if(psbt->output_data){
-        vector_free(psbt->output_data, true);
-        psbt->output_data = NULL;
+    if(ppsbt->output_data){
+        vector_free(ppsbt->output_data, true);
+        ppsbt->output_data = NULL;
     }
 }
 
@@ -435,9 +430,9 @@ static inline void ser_psbt_map_elem(cstring *str, psbt_map_elem * elem)
     ser_bytes(str, elem->value.p, elem->value.len);
 }
 
-int psbt_serialize( cstring * str, const psbt * psbt )
+int psbt_serialize( cstring * str, const psbt * ppsbt )
 {
-    if( !str || !psbt || !psbt->global_data){
+    if( !str || !ppsbt || !ppsbt->global_data){
         return false;
     }
     size_t origin_len = str->len;
@@ -448,8 +443,8 @@ int psbt_serialize( cstring * str, const psbt * psbt )
     psbt_map_elem * elem;
     size_t i,j;
     vector * vec;
-    for(i=0; i<psbt->global_data->len; i++){
-        elem = vector_idx(psbt->global_data, i);
+    for(i=0; i<ppsbt->global_data->len; i++){
+        elem = vector_idx(ppsbt->global_data, i);
         if(!psbt_map_elem_get_flag_dirty(elem)){
             ser_psbt_map_elem(str, elem);
         }
@@ -458,9 +453,9 @@ int psbt_serialize( cstring * str, const psbt * psbt )
         }
     }
     cstr_append_c(str, 0);
-    if( psbt->input_data )
-    for(i=0; i<psbt->input_data->len; i++){
-        vec = vector_idx(psbt->input_data, i);
+    if( ppsbt->input_data )
+    for(i=0; i<ppsbt->input_data->len; i++){
+        vec = vector_idx(ppsbt->input_data, i);
         for(j=0; j<vec->len; j++){
             elem = vector_idx(vec, j);
             if( psbt_map_elem_get_flag_dirty(elem)){
@@ -486,8 +481,8 @@ int psbt_serialize( cstring * str, const psbt * psbt )
         cstr_append_c(str, 0);
     }
 
-    for(i=0; i<psbt->output_data->len; i++){
-        vec = vector_idx(psbt->output_data, i);
+    for(i=0; i<ppsbt->output_data->len; i++){
+        vec = vector_idx(ppsbt->output_data, i);
         for(j=0; j<vec->len; j++){
             elem = vector_idx(vec, j);
             if( psbt_map_elem_get_flag_dirty(elem)){
@@ -510,12 +505,12 @@ _reset_cstring:
 }
 
 
-btc_tx * psbt_get_unsigned_tx(const psbt * psbt)
+btc_tx * psbt_get_unsigned_tx(const psbt * ppsbt)
 {
     btc_tx * ret = NULL;
     size_t i;
-    for(i=0; i<psbt->global_data->len; i++ ){
-        psbt_map_elem * elem = vector_idx(psbt->global_data, i);
+    for(i=0; i<ppsbt->global_data->len; i++ ){
+        psbt_map_elem * elem = vector_idx(ppsbt->global_data, i);
         if( elem->type.global == PSBT_GLOBAL_UNSIGNED_TX && !psbt_map_elem_get_flag_unknown_type(elem)){
             ret = elem->parsed.elem;
         }
@@ -535,17 +530,17 @@ static btc_bool checkScriptPubkeyMatch(cstring *script, const uint160 targetHash
     return memcmp(scriptHash, targetHash, 20) == 0;
 }
 
-int psbt_check_for_sig(const psbt *psbt, uint32_t input_n, uint32_t * hashtype_out, char ** err_message)
+int psbt_check_for_sig(const psbt *ppsbt, uint32_t input_n, uint32_t * hashtype_out, char ** err_message)
 {
     #define SET_ERR_MSG_AND_RET(msg) { if(err_message) *err_message = #msg ; return false; }
 
-    if( !psbt || !psbt->global_data || !psbt->input_data ) SET_ERR_MSG_AND_RET("invalid psbt");
-    if( psbt->input_data->len <= input_n ) SET_ERR_MSG_AND_RET("input_n too large");
-    btc_tx * tx = psbt_get_unsigned_tx(psbt);
+    if( !ppsbt || !ppsbt->global_data || !ppsbt->input_data ) SET_ERR_MSG_AND_RET("invalid psbt");
+    if( ppsbt->input_data->len <= input_n ) SET_ERR_MSG_AND_RET("input_n too large");
+    btc_tx * tx = psbt_get_unsigned_tx(ppsbt);
     if( !tx ) SET_ERR_MSG_AND_RET("get unsigned transaction error");
     if( tx->vin->len <= input_n ) SET_ERR_MSG_AND_RET("input_n too large");
     btc_tx_in * tx_in = vector_idx(tx->vin, input_n);
-    vector * input_map = vector_idx(psbt->input_data, input_n);
+    vector * input_map = vector_idx(ppsbt->input_data, input_n);
     size_t i;
     btc_tx * prev_tx;
     btc_tx_out * prev_tx_out = NULL;
@@ -560,7 +555,6 @@ int psbt_check_for_sig(const psbt *psbt, uint32_t input_n, uint32_t * hashtype_o
     witnessStr.len = 0;
     vector *data_out = NULL;
     enum btc_tx_out_type tx_out_type;
-    uint8_t * scriptPubkeyHash = NULL;
     * hashtype_out = SIGHASH_ALL;
     for(i=0; i<input_map->len; i++){
         psbt_map_elem * elem = vector_idx(input_map, i);
@@ -587,6 +581,8 @@ int psbt_check_for_sig(const psbt *psbt, uint32_t input_n, uint32_t * hashtype_o
             break;
         case PSBT_IN_SIGHASH_TYPE:
             *hashtype_out = elem->parsed.data;
+            break;
+        default:
             break;
         }
     }
@@ -649,17 +645,17 @@ int psbt_check_for_sig(const psbt *psbt, uint32_t input_n, uint32_t * hashtype_o
 }
 
 
-int psbt_get_sighash(const psbt *psbt, uint32_t input_n, uint32_t hash_type, uint256 hash, char ** err_message)
+int psbt_get_sighash(const psbt *ppsbt, uint32_t input_n, uint32_t hash_type, uint256 hash, char ** err_message)
 {
     #define SET_ERR_MSG_AND_RET(msg) { if(err_message) *err_message = #msg ; return false; }
 
-    if( !psbt || !psbt->global_data || !psbt->input_data ) SET_ERR_MSG_AND_RET("invalid psbt");
-    if( psbt->input_data->len <= input_n ) SET_ERR_MSG_AND_RET("input_n too large");
-    btc_tx * tx = psbt_get_unsigned_tx(psbt);
+    if( !ppsbt || !ppsbt->global_data || !ppsbt->input_data ) SET_ERR_MSG_AND_RET("invalid psbt");
+    if( ppsbt->input_data->len <= input_n ) SET_ERR_MSG_AND_RET("input_n too large");
+    btc_tx * tx = psbt_get_unsigned_tx(ppsbt);
     if( !tx ) SET_ERR_MSG_AND_RET("get unsigned transaction error");
     if( tx->vin->len <= input_n ) SET_ERR_MSG_AND_RET("input_n too large");
     btc_tx_in * tx_in = vector_idx(tx->vin, input_n);
-    vector * input_map = vector_idx(psbt->input_data, input_n);
+    vector * input_map = vector_idx(ppsbt->input_data, input_n);
     size_t i;
     btc_tx * prev_tx;
     btc_tx_out * prev_tx_out = NULL;
@@ -675,7 +671,6 @@ int psbt_get_sighash(const psbt *psbt, uint32_t input_n, uint32_t hash_type, uin
     witnessStr.len = 0;
     vector *data_out = NULL;
     enum btc_tx_out_type tx_out_type;
-    uint8_t * scriptPubkeyHash = NULL;
     for(i=0; i<input_map->len; i++){
         psbt_map_elem * elem = vector_idx(input_map, i);
         btc_tx_in * vin = vector_idx(tx->vin, i);
@@ -703,6 +698,8 @@ int psbt_get_sighash(const psbt *psbt, uint32_t input_n, uint32_t hash_type, uin
             //*hashtype_out = elem->parsed.data;
             if(elem->parsed.data != hash_type)
                 SET_ERR_MSG_AND_RET("hash type missmatch")
+            break;
+        default:
             break;
         }
     }
@@ -739,9 +736,9 @@ int psbt_get_sighash(const psbt *psbt, uint32_t input_n, uint32_t hash_type, uin
         tx_out_type = btc_script_classify(&redeemStr, data_out);
         if( tx_out_type == BTC_TX_WITNESS_V0_SCRIPTHASH){
             if( witnessStr.len != 0){
-                uint256 hash;
-                sha256_Raw((uint8_t*)witnessStr.str, witnessStr.len, hash);
-                if( memcmp(vector_idx(data_out,0), hash, 32) != 0){
+                uint256 prevhash;
+                sha256_Raw((uint8_t*)witnessStr.str, witnessStr.len, prevhash);
+                if( memcmp(vector_idx(data_out,0), prevhash, 32) != 0){
                     vector_free(data_out, true);
                     SET_ERR_MSG_AND_RET("witness script not match hash in redeem script")
                 }
@@ -804,10 +801,10 @@ int psbt_get_sighash(const psbt *psbt, uint32_t input_n, uint32_t hash_type, uin
     return true;
 }
 
-int psbt_add_partial_sig(psbt *psbt, uint32_t input_n, uint8_t pubkey[33], uint8_t sig[65])
+int psbt_add_partial_sig(psbt *ppsbt, uint32_t input_n, uint8_t pubkey[33], uint8_t sig[65])
 {
-    if( !psbt || !psbt->global_data || !psbt->input_data ) return false;
-    if( psbt->input_data->len <= input_n ) return false;
+    if( !ppsbt || !ppsbt->global_data || !ppsbt->input_data ) return false;
+    if( ppsbt->input_data->len <= input_n ) return false;
     if( !pubkey || !sig ) return false;
     psbt_map_elem * elem = psbt_map_elem_new();
     elem->type.input = PSBT_IN_PARTIAL_SIG;
@@ -815,19 +812,19 @@ int psbt_add_partial_sig(psbt *psbt, uint32_t input_n, uint8_t pubkey[33], uint8
     elem->parsed.elem = btc_malloc(33+65);
     memcpy(elem->parsed.elem, pubkey, 33);
     memcpy((uint8_t*)elem->parsed.elem + 33, sig, 65);
-    vector_add(vector_idx(psbt->input_data, input_n), elem);
+    vector_add(vector_idx(ppsbt->input_data, input_n), elem);
     return true;
 }
 
-int psbt_get_miner_fee(const psbt *psbt, uint64_t * sat)
+int psbt_get_miner_fee(const psbt *ppsbt, uint64_t * sat)
 {
-    if( !psbt || !psbt->global_data || !psbt->input_data || !psbt->output_data) return false;
-    size_t vin_len = psbt->input_data->len;
-    size_t vout_len = psbt->input_data->len;
+    if( !ppsbt || !ppsbt->global_data || !ppsbt->input_data || !ppsbt->output_data) return false;
+    size_t vin_len = ppsbt->input_data->len;
+    size_t vout_len = ppsbt->input_data->len;
     size_t i,j;
     int  vin_has_value;
     vector *in;
-    btc_tx * tx = psbt_get_unsigned_tx(psbt);
+    btc_tx * tx = psbt_get_unsigned_tx(ppsbt);
     btc_tx *prev_tx ;
     if( !tx ){
         return false;
@@ -836,7 +833,7 @@ int psbt_get_miner_fee(const psbt *psbt, uint64_t * sat)
     uint64_t vin_sat = 0, vout_sat = 0;
     for( i=0; i<vin_len; i++)
     {
-        in = vector_idx(psbt->input_data, i);
+        in = vector_idx(ppsbt->input_data, i);
         vin_has_value = false;
         for( j=0; j<in->len; j++){
             psbt_map_elem * elem = vector_idx(in, j);

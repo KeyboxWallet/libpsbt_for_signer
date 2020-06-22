@@ -132,13 +132,13 @@ LIBBTC_API uint32_t psbt_get_input_count(const psbt * psbt);
 
 LIBBTC_API btc_tx * psbt_get_unsigned_tx(const psbt * psbt);
 
-LIBBTC_API int psbt_check_for_sig(const psbt *psbt, uint32_t input_n, uint32_t * hashtype_out, char ** err_message);
+LIBBTC_API int psbt_check_for_sig(const psbt *ppsbt, uint32_t input_n, uint32_t * hashtype_out, char ** err_message);
 
-LIBBTC_API int psbt_get_sighash(const psbt *psbt, uint32_t input_n, uint32_t hashtype, uint256 hash, char ** err_message);
+LIBBTC_API int psbt_get_sighash(const psbt *ppsbt, uint32_t input_n, uint32_t hashtype, uint256 hash, char ** err_message);
 
-LIBBTC_API int psbt_add_partial_sig(psbt *psbt, uint32_t input_n, uint8_t pubkey[33], uint8_t sig[65]);
+LIBBTC_API int psbt_add_partial_sig(psbt *ppsbt, uint32_t input_n, uint8_t pubkey[33], uint8_t sig[65]);
 
-LIBBTC_API int psbt_get_miner_fee(const psbt *psbt, uint64_t * sat);
+LIBBTC_API int psbt_get_miner_fee(const psbt *ppsbt, uint64_t * sat);
 
 LIBBTC_END_DECL
 

@@ -91,7 +91,7 @@ err_out:
     return false;
 }
 
-btc_script_op* btc_script_op_new()
+btc_script_op* btc_script_op_new(void)
 {
     btc_script_op* script_op;
     script_op = btc_calloc(1, sizeof(*script_op));

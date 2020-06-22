@@ -222,7 +222,7 @@ static const int MAX_SCRIPT_SIZE = 10000;
 //copy a script without the codeseperator ops
 btc_bool btc_script_copy_without_op_codeseperator(const cstring* scriptin, cstring* scriptout);
 
-LIBBTC_API btc_script_op* btc_script_op_new();
+LIBBTC_API btc_script_op* btc_script_op_new(void);
 LIBBTC_API void btc_script_op_free(btc_script_op* script_op);
 void btc_script_op_free_cb(void* data);
 btc_bool btc_script_get_ops(const cstring* script_in, vector* ops_out);
