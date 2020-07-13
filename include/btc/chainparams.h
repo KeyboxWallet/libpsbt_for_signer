@@ -60,6 +60,13 @@ extern const btc_chainparams btc_chainparams_main;
 extern const btc_chainparams btc_chainparams_test;
 extern const btc_chainparams btc_chainparams_regtest;
 
+extern const btc_chainparams ltc_chainparams_main;
+extern const btc_chainparams ltc_chainparams_test;
+
+extern const btc_chainparams dash_chainparams_main;
+extern const btc_chainparams dash_chainparams_test;
+
+
 // the mainnet checkpoins, needs a fix size
 extern const btc_checkpoint btc_mainnet_checkpoint_array[21];
 
