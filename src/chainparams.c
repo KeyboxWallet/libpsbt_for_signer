@@ -27,7 +27,7 @@
 #include <btc/chainparams.h>
 
 const btc_chainparams btc_chainparams_main = {
-    "main",
+    "Bitcoin",
     0x00,
     0x05,
     "bc",
@@ -40,7 +40,7 @@ const btc_chainparams btc_chainparams_main = {
     {{"seed.bitcoin.jonasschnelli.ch"}, {}},
 };
 const btc_chainparams btc_chainparams_test = {
-    "testnet3",
+    "Bitcoin testnet",
     0x6f,
     0xc4,
     "tb",
@@ -68,7 +68,7 @@ const btc_chainparams btc_chainparams_regtest = {
 
 
 const btc_chainparams ltc_chainparams_main = {
-    "ltcmain",
+    "Litecoin",
     0x30,
     0x32,
     "ltc",
@@ -81,7 +81,7 @@ const btc_chainparams ltc_chainparams_main = {
     {{"dnsseed.litecointools.com"}, {}},
 };
 const btc_chainparams ltc_chainparams_test = {
-    "ltctestnet",
+    "Litecoin testnet",
     0x6f,
     0x3a,
     "tltc",
@@ -95,7 +95,7 @@ const btc_chainparams ltc_chainparams_test = {
 };
 
 const btc_chainparams dash_chainparams_main = {
-    "dashmain",
+    "Dash",
     0x4c,
     0x10,
     "dash",
@@ -107,7 +107,7 @@ const btc_chainparams dash_chainparams_main = {
     {{"dash.org"}, {}},
 };
 const btc_chainparams dash_chainparams_test = {
-    "dashtestnet",
+    "Dash testnet",
     0x8c,
     0x13,
     "tdash",
