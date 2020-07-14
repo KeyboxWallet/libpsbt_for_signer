@@ -32,6 +32,7 @@
 
 #include  <base58.h>
 #include <segwit_addr.h>
+#include <cash_addr.h>
 #include <btc/serialize.h>
 #include <sha2.h>
 #include <btc/tx.h>
@@ -805,3 +806,30 @@ void btc_tx_get_output_address(char address[98], const btc_tx_out * tx_out, cons
     vector_free(data, true);
 }
 
+void bch_tx_get_output_address(char address[98], const btc_tx_out * tx_out, const char * hrp)
+{
+    if(!tx_out || !tx_out->script_pubkey){
+        return;
+    }
+    vector * data;
+    uint8_t buffer[40];
+    data = vector_new(2, free);
+    enum btc_tx_out_type type = btc_script_classify(tx_out->script_pubkey, data);
+    switch( type){
+    case BTC_TX_PUBKEYHASH:
+        buffer[0] = 0 ;
+        memcpy(buffer+1, vector_idx(data,0),20);
+        cash_addr_encode(address, hrp, buffer, 21);
+        break;
+    case BTC_TX_SCRIPTHASH:
+        buffer[0] = 3 | 8;
+        memcpy(buffer+1, vector_idx(data,0),32);
+        cash_addr_encode(address, hrp, buffer, 33);
+        break;
+    default:
+        strcpy(address, "unknown");
+        break;
+    }
+
+    vector_free(data, true);
+}

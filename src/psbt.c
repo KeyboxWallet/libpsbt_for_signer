@@ -636,8 +636,14 @@ int psbt_check_for_sig(const psbt *ppsbt, uint32_t input_n, uint32_t * hashtype_
     }
     else {
         if( witness_utxo ){
-            if(!btc_script_is_witnessprogram(witness_utxo->script_pubkey, &witness_version, witness_program, &program_len))
-                SET_ERR_MSG_AND_RET("witness_utxo with non witness signature");
+            if( !(*hashtype_out & SIGHASH_BIP143_BITCOINCASH)){
+                if( !btc_script_is_witnessprogram(witness_utxo->script_pubkey, &witness_version, witness_program, &program_len))
+                    SET_ERR_MSG_AND_RET("witness_utxo with non witness signature");
+            }
+            else {
+                if( btc_script_is_witnessprogram(witness_utxo->script_pubkey, &witness_version, witness_program, &program_len))
+                    SET_ERR_MSG_AND_RET("BCH: witness utxo should not be real witness program");
+            }
         }
     }
 
@@ -671,6 +677,7 @@ int psbt_get_sighash(const psbt *ppsbt, uint32_t input_n, uint32_t hash_type, ui
     witnessStr.len = 0;
     vector *data_out = NULL;
     enum btc_tx_out_type tx_out_type;
+    int bch = hash_type & SIGHASH_BIP143_BITCOINCASH;
     for(i=0; i<input_map->len; i++){
         psbt_map_elem * elem = vector_idx(input_map, i);
         btc_tx_in * vin = vector_idx(tx->vin, i);
@@ -753,8 +760,11 @@ int psbt_get_sighash(const psbt *ppsbt, uint32_t input_n, uint32_t hash_type, ui
     }
     else {
         if( witness_utxo ){
-            if(!btc_script_is_witnessprogram(witness_utxo->script_pubkey, &witness_version, witness_program, &program_len))
+            int isWitness = btc_script_is_witnessprogram(witness_utxo->script_pubkey, &witness_version, witness_program, &program_len);
+            if(!bch && !isWitness)
                 SET_ERR_MSG_AND_RET("witness_utxo with non witness signature");
+            if( bch && isWitness)
+                SET_ERR_MSG_AND_RET("bch witness_utxo must not be witness signature");
         }
     }
 
@@ -786,6 +796,9 @@ int psbt_get_sighash(const psbt *ppsbt, uint32_t input_n, uint32_t hash_type, ui
         }
         else if( tx_out_type == BTC_TX_WITNESS_V0_SCRIPTHASH ){
             ret = btc_tx_sighash(tx, &witnessStr, input_n, hash_type, witness_utxo->value, SIGVERSION_WITNESS_V0 ,hash);
+        }
+        else if( bch && tx_out_type == BTC_TX_PUBKEYHASH){
+            ret = btc_tx_sighash(tx, fromPubkey, input_n, hash_type, witness_utxo->value, SIGVERSION_WITNESS_V0 ,hash);
         }
         else {
             vector_free(data_out, true);
